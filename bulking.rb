@@ -4,6 +4,7 @@ require_relative 'item.rb'
 $include = false
 $exclude = false
 $subtract = false
+$norecipe = false
 
 FILEPATH = "foodlist/foodlist.csv"
 CARBS_INDEX = 0
@@ -99,6 +100,11 @@ def extractItemList(file)
 
     file.each do
         |line|
+
+        if $norecipe && (line[0] == line[0].upcase) then 
+            next
+        end
+
         itemList << extractItemFromLine(line)
     end
 
@@ -168,7 +174,8 @@ if __FILE__ == $0
     puts "INSTRUCTIONS:
     -i/-include \"Item1,Item2,Item3\"
     -e/-exclude \"Item1,Item2,Item3\"
-    -s/-subtract carbs,fat,protein,calories"
+    -s/-subtract carbs,fat,protein,calories
+    -n/-no-recipe (use with -i)"
 
     includeItemsLine = nil
     excludeItemsLine = nil
@@ -186,6 +193,8 @@ if __FILE__ == $0
         elsif ARGV[i] == '-s' or ARGV[i] == '-subtract' then
             $subtract = true
             subtractMacrosLine = ARGV[i+1]
+        elsif ARGV[i] == '-n' or ARGV[i] == '-no-recipe' then
+            $norecipe = true
         end
     end
 
