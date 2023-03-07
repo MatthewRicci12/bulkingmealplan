@@ -4,7 +4,9 @@ require_relative 'item.rb'
 $include = false
 $exclude = false
 $subtract = false
-$norecipe = false
+$noRecipe = false
+$oneRecipe = false
+$numRecipes = 0
 
 FILEPATH = "foodlist/foodlist.csv"
 CARBS_INDEX = 0
@@ -101,8 +103,10 @@ def extractItemList(file)
     file.each do
         |line|
 
-        if $norecipe && (line[0] == line[0].upcase) then 
-            next
+        if (line[0] == line[0].upcase) then 
+            if $noRecipe then next
+            else $numRecipes += 1
+            end
         end
 
         itemList << extractItemFromLine(line)
@@ -125,6 +129,8 @@ def f(goal, itemList)
     copyOfItemList = []
     itemList.each{|item| copyOfItemList << item.clone()}
 
+    oneRecipeUsed = $oneRecipe ? true : false;
+
     size = copyOfItemList.size
     metCarbsGoal, metFatGoal, metProteinGoal, metCaloriesGoal = copyOfGoal.carbs <= 0, copyOfGoal.fat <= 0, copyOfGoal.protein <= 0, \
         copyOfGoal.calories <= 0
@@ -138,7 +144,18 @@ def f(goal, itemList)
     while !metCarbsGoal && !metProteinGoal && !metCaloriesGoal
         # Grab a random index, index into the item list. Use linear probing, if
         # item has already been used.
-        randIndex = rand(size)
+        if oneRecipeUsed then 
+            if $oneRecipe then 
+                randIndex = rand($numRecipes)
+                $oneRecipe = false
+            else
+                randIndex = rand(size - $numRecipes) + $numRecipes
+            end
+        else
+            randIndex = rand(size)
+        end
+
+
         randItem = copyOfItemList[randIndex]
         while randItem.used
             randIndex += 1
@@ -168,14 +185,16 @@ def f(goal, itemList)
     puts "Total carbs: #{totalCarbs}, total fat: #{totalFat}, total protein: #{totalProtein}, total calories: #{totalCalories}."
     puts "Remaining carbs: #{copyOfGoal.carbs <= 0 ? 0 : originalGoal.carbs -  totalCarbs}, remaining fat: #{copyOfGoal.fat <= 0 ? 0 : originalGoal.fat -  totalFat}, remaining protein: #{copyOfGoal.protein <= 0 ? 0 : originalGoal.protein -  totalProtein}, remaining calories: #{copyOfGoal.calories <= 0 ? 0 :  originalGoal.calories -  totalCalories}."
 
+    $oneRecipe = oneRecipeUsed ? true : false 
 end
 
 if __FILE__ == $0
     puts "INSTRUCTIONS:
-    -i/-include \"Item1,Item2,Item3\"
-    -e/-exclude \"Item1,Item2,Item3\"
-    -s/-subtract carbs,fat,protein,calories
-    -n/-no-recipe (use with -i)"
+    -i/--include \"Item1,Item2,Item3\"
+    -e/--exclude \"Item1,Item2,Item3\"
+    -s/--subtract carbs,fat,protein,calories
+    -n/--no-recipe
+    -o/--one-recipe"
 
     includeItemsLine = nil
     excludeItemsLine = nil
@@ -184,17 +203,19 @@ if __FILE__ == $0
     # Grab command line arguments, and set them, as well as their respective 
     # arguments.
     for i in 0..ARGV.length
-        if ARGV[i] == '-i' or ARGV[i] == '-include' then
+        if ARGV[i] == '-i' or ARGV[i] == '--include' then
             $include = true
             includeItemsLine = ARGV[i+1]
-        elsif ARGV[i] == '-e' or ARGV[i] == '-exclude' then
+        elsif ARGV[i] == '-e' or ARGV[i] == '--exclude' then
             $exclude = true
             excludeItemsLine = ARGV[i+1]
-        elsif ARGV[i] == '-s' or ARGV[i] == '-subtract' then
+        elsif ARGV[i] == '-s' or ARGV[i] == '--subtract' then
             $subtract = true
             subtractMacrosLine = ARGV[i+1]
-        elsif ARGV[i] == '-n' or ARGV[i] == '-no-recipe' then
-            $norecipe = true
+        elsif ARGV[i] == '-n' or ARGV[i] == '--no-recipe' then
+            $noRecipe = true
+        elsif ARGV[i] == '-o' or ARGV[i] == '--one-recipe' then
+            $oneRecipe = true
         end
     end
 
