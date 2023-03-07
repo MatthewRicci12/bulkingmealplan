@@ -5,7 +5,6 @@ $include = false
 $exclude = false
 $subtract = false
 $noRecipe = false
-$oneRecipe = false
 $numRecipes = 0
 
 FILEPATH = "foodlist/foodlist.csv"
@@ -129,11 +128,11 @@ def f(goal, itemList)
     copyOfItemList = []
     itemList.each{|item| copyOfItemList << item.clone()}
 
-    oneRecipeUsed = $oneRecipe ? true : false;
-
     size = copyOfItemList.size
     metCarbsGoal, metFatGoal, metProteinGoal, metCaloriesGoal = copyOfGoal.carbs <= 0, copyOfGoal.fat <= 0, copyOfGoal.protein <= 0, \
         copyOfGoal.calories <= 0
+
+    recipeUsed = false
 
     
     totalCarbs = 0
@@ -144,17 +143,13 @@ def f(goal, itemList)
     while !metCarbsGoal && !metProteinGoal && !metCaloriesGoal
         # Grab a random index, index into the item list. Use linear probing, if
         # item has already been used.
-        if oneRecipeUsed then 
-            if $oneRecipe then 
-                randIndex = rand($numRecipes)
-                $oneRecipe = false
-            else
-                randIndex = rand(size - $numRecipes) + $numRecipes
-            end
+        
+        if !recipeUsed then
+            recipeUsed = true
+            randIndex = rand($numRecipes)
         else
-            randIndex = rand(size)
+            randIndex = rand(size - $numRecipes) + $numRecipes
         end
-
 
         randItem = copyOfItemList[randIndex]
         while randItem.used
@@ -185,7 +180,6 @@ def f(goal, itemList)
     puts "Total carbs: #{totalCarbs}, total fat: #{totalFat}, total protein: #{totalProtein}, total calories: #{totalCalories}."
     puts "Remaining carbs: #{copyOfGoal.carbs <= 0 ? 0 : originalGoal.carbs -  totalCarbs}, remaining fat: #{copyOfGoal.fat <= 0 ? 0 : originalGoal.fat -  totalFat}, remaining protein: #{copyOfGoal.protein <= 0 ? 0 : originalGoal.protein -  totalProtein}, remaining calories: #{copyOfGoal.calories <= 0 ? 0 :  originalGoal.calories -  totalCalories}."
 
-    $oneRecipe = oneRecipeUsed ? true : false 
 end
 
 if __FILE__ == $0
@@ -193,8 +187,7 @@ if __FILE__ == $0
     -i/--include \"Item1,Item2,Item3\"
     -e/--exclude \"Item1,Item2,Item3\"
     -s/--subtract carbs,fat,protein,calories
-    -n/--no-recipe
-    -o/--one-recipe"
+    -n/--no-recipe"
 
     includeItemsLine = nil
     excludeItemsLine = nil
@@ -214,8 +207,6 @@ if __FILE__ == $0
             subtractMacrosLine = ARGV[i+1]
         elsif ARGV[i] == '-n' or ARGV[i] == '--no-recipe' then
             $noRecipe = true
-        elsif ARGV[i] == '-o' or ARGV[i] == '--one-recipe' then
-            $oneRecipe = true
         end
     end
 
