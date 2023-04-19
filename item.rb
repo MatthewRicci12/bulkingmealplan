@@ -1,3 +1,9 @@
+# FILE: item.rb
+# AUTHOR: Matthew Riccci
+# DESCRIPTION:
+# This class will represent a single Item; a food item that has information about
+# its name and macros. The Goal itself is also an Item. 
+
 class Item
     def initialize name, carbs, protein, fat, calories
         @name = name
